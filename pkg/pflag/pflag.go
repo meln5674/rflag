@@ -27,3 +27,9 @@ func (f FlagSet) StringToStringVar(p *map[string]string, value map[string]string
 func (f FlagSet) DurationVar(p *time.Duration, value time.Duration, info rflag.TagInfo) {
 	f.PFlagSet.DurationVar(p, info.Name, value, info.Usage)
 }
+func (f FlagSet) StringArrayVar(p *[]string, value []string, info rflag.TagInfo) {
+	f.PFlagSet.StringArrayVar(p, info.Name, value, info.Usage)
+}
+func (f FlagSet) StringSliceVar(p *[]string, value []string, info rflag.TagInfo) {
+	f.PFlagSet.StringSliceVar(p, info.Name, value, info.Usage)
+}

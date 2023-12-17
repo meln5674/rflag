@@ -27,6 +27,10 @@ const (
 	StructTagFieldShorthand = "shorthand"
 	StructTagFieldUsage     = "usage"
 	StructTagFieldPrefix    = "prefix"
+	StructTagFieldSliceType = "slice-type"
+	SliceTypeArray          = "array"
+	SliceTypeSlice          = "slice"
+	DefaultSliceType        = SliceTypeArray
 )
 
 type TagInfo = rflag.TagInfo
@@ -75,9 +79,19 @@ func ParseTag(tag string) (TagInfo, error) {
 			info.Usage = value
 		case StructTagFieldPrefix:
 			info.Prefix = value
+		case StructTagFieldSliceType:
+			switch value {
+			case SliceTypeSlice, SliceTypeArray:
+				info.SliceType = value
+			default:
+				return empty, fmt.Errorf("Unknown slice-type %s", value)
+			}
 		default:
 			return empty, fmt.Errorf("Unknown struct tag field '%s'", name)
 		}
+	}
+	if info.SliceType == "" {
+		info.SliceType = DefaultSliceType
 	}
 	return info, nil
 }
@@ -113,6 +127,15 @@ func registerField(flags FlagSet, prefix string, field reflect.StructField, ptrV
 		registerFieldWithType[map[string]string](flags.StringToStringVar, ptrV, info)
 	case time.Duration:
 		registerFieldWithType[time.Duration](flags.DurationVar, ptrV, info)
+	case []string:
+		switch info.SliceType {
+		case SliceTypeSlice:
+			registerFieldWithType[[]string](flags.StringSliceVar, ptrV, info)
+		case SliceTypeArray:
+			registerFieldWithType[[]string](flags.StringArrayVar, ptrV, info)
+		default:
+			panic(fmt.Sprintf("BUG: Unknown slice type %s", info.SliceType))
+		}
 	default:
 		switch field.Type.Kind() {
 		case reflect.Struct:
